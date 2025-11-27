@@ -1,6 +1,7 @@
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -64,8 +65,11 @@ public class WordCount {
 			if (Arrays.equals(words, emptyWords))
 				return;
 
-			for (String word : words)
+            String ponctuation = "[.,!?:;\"'()]+$";
+			for (String word : words){
+                word = word.replaceAll(ponctuation, "").toLowerCase();
 				context.write(new Text(word), one);
+            }
 		}
 	}
 
@@ -75,10 +79,14 @@ public class WordCount {
 				throws IOException, InterruptedException {
 			int sum = 0;
 
-			for (IntWritable val : values)
-				sum += val.get();
+			for (IntWritable val : values){
+                sum += val.get();
+            }
 
-			context.write(key, new IntWritable(sum));
+            if( key.toString().length() >4 && sum>=10){
+                context.write(key, new IntWritable(sum));
+            }
+
 		}
 	}
 

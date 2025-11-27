@@ -1,6 +1,7 @@
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -8,6 +9,7 @@ import java.util.logging.SimpleFormatter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -36,10 +38,36 @@ public class GroupBy {
 	}
 
 	public static class Map extends Mapper<LongWritable, Text, Text, DoubleWritable> {
+        private final static IntWritable one = new IntWritable(1);
+        private final static String emptyWords[] = { "" };
+
 
 		@Override
-		public void map(LongWritable key, Text value, Context context) {
-			// TODO: à compléter
+		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String line = value.toString();
+            String[] words = line.split(",");
+
+
+
+
+            if(!words[0].equals("Row ID")){
+                // context.write(new Text(words[2]+"_"+words[10]),new DoubleWritable(Double.parseDouble(words[words.length-1])));
+                // context.write(new Text(words[2]+"_"+words[14]), new DoubleWritable(Double.parseDouble(words[words.length-1])));
+
+                context.write(new Text(words[1]),new DoubleWritable(1.));
+
+            }
+
+            // order Date index : 2
+            // state index : 10
+            // category : 14
+            // id customer : 5
+
+            // exercice 3
+            // faire un nouveau fichier, changer doublewritable mettre les 2 valeurs
+            // réger le reduce en fonction
+
+
 		}
 	}
 
@@ -48,7 +76,14 @@ public class GroupBy {
 		@Override
 		public void reduce(Text key, Iterable<DoubleWritable> values, Context context)
 				throws IOException, InterruptedException {
-			// TODO: à compléter
+
+                double sum = 0.0;
+                for (DoubleWritable val : values) {
+                    sum += val.get();
+                }
+
+                context.write(key, new DoubleWritable(sum));
+
 		}
 	}
 
