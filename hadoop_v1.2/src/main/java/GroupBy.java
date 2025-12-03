@@ -51,10 +51,10 @@ public class GroupBy {
 
 
             if(!words[0].equals("Row ID")){
-                // context.write(new Text(words[2]+"_"+words[10]),new DoubleWritable(Double.parseDouble(words[words.length-1])));
-                // context.write(new Text(words[2]+"_"+words[14]), new DoubleWritable(Double.parseDouble(words[words.length-1])));
+                // context.write(new Text(words[2]+"_"+words[10]),new DoubleWritable(Double.parseDouble(words[words.length-4])));
+                context.write(new Text(words[2]+"_"+words[14]), new DoubleWritable(Double.parseDouble(words[words.length-4])));
 
-                context.write(new Text(words[1]),new DoubleWritable(1.));
+                // context.write(new Text(words[1]),new DoubleWritable(1.));
 
             }
 
