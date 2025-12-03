@@ -14,14 +14,15 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat; // Nouvelle API
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public class RequetesPrincipales {
     // Chemins (Assurez-vous qu'ils existent sur HDFS)
-    private static final String INPUT_PATH_CUSTOMERS = "input-requetesPrincipales/Utilisateur.tbl";
-    private static final String INPUT_PATH_ORDERS = "input-requetesPrincipales/Fact.tbl";
+    private static final String INPUT_PATH_CONTENU = "input-requetes/contenu.csv";
+    private static final String INPUT_PATH_STREAM = "input-requetes/stream_fact.csv";
     private static final String OUTPUT_PATH = "output/requetesPrincipales-";
 
     public static class StatsTuple implements Writable {
@@ -57,15 +58,15 @@ public class RequetesPrincipales {
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
-            String[] words = line.split("\\|");
+            String[] words = line.split(",");
 
-            if(line.contains("")){ // mettre un identifiant
+            if(((FileSplit)context.getInputSplit()).getPath().getName().contains("contenu")){ // mettre un identifiant
                 // tring genre = words[]; // mettre l'index
                 // ID contenu
-                String idContenu = words[];
+                String idContenu = words[0];
                 context.write(new Text(idContenu), new Text("GENRE|"+line));
             }else{
-                String idContenu = words[];
+                String idContenu = words[0];
                 context.write(new Text(idContenu), new Text("FACT|"+line));
 
             }
@@ -75,7 +76,7 @@ public class RequetesPrincipales {
     }
 
     // 2. REDUCER
-    public static class JoinReducer extends Reducer<Text, Text, Text, Duob> {
+    public static class JoinReducer extends Reducer<Text, Text, Text, Double> {
 
         @Override
         public void reduce(Text key, Iterable<Text> values, Context context)
@@ -101,17 +102,18 @@ public class RequetesPrincipales {
             if (genreData != null && !Facts.isEmpty()) {
                 for (String fact : Facts) {
 
-                    revenue+=Double.parseDouble(fact.split("\\|")[]);
+                    revenue+=Double.parseDouble(fact.split(",")[9]);
 
                 }
+                context.write(new Text(genreData.split(",")[5]),revenue);
             }
-            context.write(new Text(genreData[]),revenue)
+
         }
     }
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        Job job = new Job(conf, "Join");
+        Job job = new Job(conf, "RequetesPrincipales");
 
         job.setJarByClass(Join.class);
 
@@ -121,7 +123,7 @@ public class RequetesPrincipales {
         // Clé de sortie du Mapper (ID Client)
         job.setOutputKeyClass(Text.class);
         // Valeur de sortie du Mapper (Ligne tagguée)
-        job.setOutputValueClass(Text.class);
+        job.setOutputValueClass(Double.class);
 
         job.setInputFormatClass(TextInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
@@ -129,7 +131,7 @@ public class RequetesPrincipales {
         // CORRECTION ICI : Ajout des deux chemins correctement
         // FileInputFormat.addInputPath(job, new Path(INPUT_PATH_CUSTOMERS));
         // FileInputFormat.addInputPath(job, new Path(INPUT_PATH_ORDERS));
-        FileInputFormat.addInputPaths(job,INPUT_PATH_CUSTOMERS+","+INPUT_PATH_ORDERS);
+        FileInputFormat.addInputPaths(job,INPUT_PATH_CONTENU+","+INPUT_PATH_STREAM);
 
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_PATH + Instant.now().getEpochSecond()));
 
