@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -18,6 +19,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.codehaus.jackson.map.ser.StdSerializers;
 
 public class RequetesPrincipales {
     // Chemins (Assurez-vous qu'ils existent sur HDFS)
@@ -60,27 +62,29 @@ public class RequetesPrincipales {
             String line = value.toString();
             String[] words = line.split(",");
 
-            if(((FileSplit)context.getInputSplit()).getPath().getName().contains("contenu")){ // mettre un identifiant
-                // tring genre = words[]; // mettre l'index
-                // ID contenu
-                String idContenu = words[0];
-                context.write(new Text(idContenu), new Text("GENRE|"+line));
-            }else{
-                String idContenu = words[0];
-                context.write(new Text(idContenu), new Text("FACT|"+line));
+            if(!line.contains("SQL") && !line.contains("lignes"))
+                if (((FileSplit) context.getInputSplit()).getPath().getName().contains("contenu")) { // mettre un identifiant
+                    // tring genre = words[]; // mettre l'index
+                    // ID contenu
+                    String idContenu = words[0];
+                    context.write(new Text(idContenu), new Text("GENRE|" + line));
+                } else {
+                    String idContenu = words[0];
+                    context.write(new Text(idContenu), new Text("FACT|" + line));
 
-            }
-
+                }
 
         }
     }
 
     // 2. REDUCER
-    public static class JoinReducer extends Reducer<Text, Text, Text, Double> {
+    public static class JoinReducer extends Reducer<Text, Text, Text, DoubleWritable> {
 
         @Override
         public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
+
+
 
             String genreData = null;
             List<String> Facts = new ArrayList<>();
@@ -90,9 +94,9 @@ public class RequetesPrincipales {
                 String content = val.toString();
 
                 if(content.contains("GENRE")){
-                    genreData = content.substring(content.indexOf("|")+1);
+                    genreData = content.substring(6);
                 }else{
-                    Facts.add(content.substring(content.indexOf("|")+1));
+                    Facts.add(content.substring(5));
                 }
             }
 
@@ -100,12 +104,20 @@ public class RequetesPrincipales {
 
             double revenue = 0.;
             if (genreData != null && !Facts.isEmpty()) {
+                System.out.println("ALOOOOOOOOOOo" +genreData);
                 for (String fact : Facts) {
 
-                    revenue+=Double.parseDouble(fact.split(",")[9]);
+                    String[] attributs =  fact.split(",");
+
+                    if(attributs[0].length()>=9) {
+                        revenue += Double.parseDouble(attributs[9]);
+                    }
 
                 }
-                context.write(new Text(genreData.split(",")[5]),revenue);
+                String[] genre =  genreData.split(",");
+                if(genre.length>=5) {
+                    context.write(new Text(genre[5]), new DoubleWritable(revenue));
+                }
             }
 
         }
@@ -115,24 +127,26 @@ public class RequetesPrincipales {
         Configuration conf = new Configuration();
         Job job = new Job(conf, "RequetesPrincipales");
 
-        job.setJarByClass(Join.class);
+        // CORRECTION 1 : La bonne classe principale
+        job.setJarByClass(RequetesPrincipales.class);
 
         job.setMapperClass(JoinMapper.class);
         job.setReducerClass(JoinReducer.class);
 
-        // Clé de sortie du Mapper (ID Client)
+        // CORRECTION 2 : DÉFINIR EXPLICITEMENT LA SORTIE DU MAPPER
+        // Le mapper sort <Text, Text>
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(Text.class);
+
+        // CORRECTION 3 : DÉFINIR LA SORTIE FINALE (REDUCER)
+        // Le reducer sort <Text, DoubleWritable>
         job.setOutputKeyClass(Text.class);
-        // Valeur de sortie du Mapper (Ligne tagguée)
-        job.setOutputValueClass(Double.class);
+        job.setOutputValueClass(DoubleWritable.class); // Utiliser Writable !
 
         job.setInputFormatClass(TextInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
-        // CORRECTION ICI : Ajout des deux chemins correctement
-        // FileInputFormat.addInputPath(job, new Path(INPUT_PATH_CUSTOMERS));
-        // FileInputFormat.addInputPath(job, new Path(INPUT_PATH_ORDERS));
-        FileInputFormat.addInputPaths(job,INPUT_PATH_CONTENU+","+INPUT_PATH_STREAM);
-
+        FileInputFormat.addInputPaths(job, INPUT_PATH_CONTENU + "," + INPUT_PATH_STREAM);
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_PATH + Instant.now().getEpochSecond()));
 
         job.waitForCompletion(true);
