@@ -1,5 +1,3 @@
-SQL> SELECT * FROM Contenu_Dimension;
-
 "ID_CONTENU","TITRE","TYPE_MEDIA","NOM_ARTISTE","NOM_ALBUM","GENRE","CODE_ISRC","DUREE_SECONDES","DATE_SORTIE","FLAG_PAROLES_DISPONIBLES","FLAG_CONTENU_EXPLICITE"
 "C_00259","Titre_Aleatoire_259","Musique","Artiste_42","Album_6","Rock",,387,"15/10/2016",0,1
 "C_00260","Titre_Aleatoire_260","Musique","Artiste_42","Album_96","Rock",,280,"30/08/2010",1,0
@@ -501,9 +499,3 @@ SQL> SELECT * FROM Contenu_Dimension;
 "C_00498","Titre_Aleatoire_498","Podcast","Artiste_69","Album_35","Pop",,295,"08/07/2013",0,0
 "C_00499","Titre_Aleatoire_499","Musique","Artiste_87","Album_99","Rock",,267,"02/06/2020",0,1
 "C_00500","Titre_Aleatoire_500","Musique","Artiste_41","Album_61","Rock",,314,"01/10/2016",0,1
-
-500 lignes selectionnees.
-
-SQL> SET MARKUP CSV OFF;
-SQL> SET MARKUP CSV ON;
-SQL> SPOOL utilisateurs.csv;

@@ -62,18 +62,18 @@ public class RequetesPrincipales {
             String line = value.toString();
             String[] words = line.split(",");
 
-            if(!line.contains("SQL") && !line.contains("lignes"))
+            if(!line.contains("ID_CONTENU")) {
                 if (((FileSplit) context.getInputSplit()).getPath().getName().contains("contenu")) { // mettre un identifiant
                     // tring genre = words[]; // mettre l'index
                     // ID contenu
                     String idContenu = words[0];
-                    context.write(new Text(idContenu), new Text("GENRE|" + line));
+                    context.write(new Text(idContenu), new Text("CONTENU|" + line));
                 } else {
-                    String idContenu = words[0];
+                    String idContenu = words[5];
                     context.write(new Text(idContenu), new Text("FACT|" + line));
 
                 }
-
+            }
         }
     }
 
@@ -86,15 +86,15 @@ public class RequetesPrincipales {
 
 
 
-            String genreData = null;
+            String contenuData = null;
             List<String> Facts = new ArrayList<>();
 
             // On sépare les données reçues pour cet ID Client
             for (Text val : values) {
                 String content = val.toString();
 
-                if(content.contains("GENRE")){
-                    genreData = content.substring(6);
+                if(content.contains("CONTENU")){
+                    contenuData = content.substring(8);
                 }else{
                     Facts.add(content.substring(5));
                 }
@@ -103,18 +103,18 @@ public class RequetesPrincipales {
             // Si on a trouvé le client ET qu'il a des commandes
 
             double revenue = 0.;
-            if (genreData != null && !Facts.isEmpty()) {
-                System.out.println("ALOOOOOOOOOOo" +genreData);
+            if (contenuData != null && !Facts.isEmpty()) {
+                System.out.println("ALOOOOOOOOOOo" +contenuData);
                 for (String fact : Facts) {
 
                     String[] attributs =  fact.split(",");
 
-                    if(attributs[0].length()>=9) {
-                        revenue += Double.parseDouble(attributs[9]);
+                    if(attributs[0].length()>=7) {
+                        revenue += Double.parseDouble(attributs[7]);
                     }
 
                 }
-                String[] genre =  genreData.split(",");
+                String[] genre =  contenuData.split(",");
                 if(genre.length>=5) {
                     context.write(new Text(genre[5]), new DoubleWritable(revenue));
                 }
