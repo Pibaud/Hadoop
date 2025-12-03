@@ -106,7 +106,6 @@ public class GroupByProdEx {
     }
 
     public static class Reduce extends Reducer<Text, StatsTuple, Text, StatsTuple> {
-9
         @Override
         public void reduce(Text key, Iterable<StatsTuple> values, Context context)
                 throws IOException, InterruptedException {
