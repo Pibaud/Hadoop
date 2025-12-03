@@ -1,0 +1,6 @@
+
+ID_REGION,NOM_REGION,NOM_PAYS,DEVISE_MONETAIRE
+REG_EU_FR,Europe Ouest,France,EUR
+REG_NA_US,North America,USA,USD
+REG_AS_JP,Asia Pacific,Japon,JPY
+REG_SA_BR,South America,Bresil,BRL
