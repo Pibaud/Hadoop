@@ -98,8 +98,9 @@ public class Join {
         job.setOutputFormatClass(TextOutputFormat.class);
 
         // CORRECTION ICI : Ajout des deux chemins correctement
-        FileInputFormat.addInputPath(job, new Path(INPUT_PATH_CUSTOMERS));
-        FileInputFormat.addInputPath(job, new Path(INPUT_PATH_ORDERS));
+        // FileInputFormat.addInputPath(job, new Path(INPUT_PATH_CUSTOMERS));
+        // FileInputFormat.addInputPath(job, new Path(INPUT_PATH_ORDERS));
+        FileInputFormat.addInputPaths(job,INPUT_PATH_CUSTOMERS+","+INPUT_PATH_ORDERS);
 
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_PATH + Instant.now().getEpochSecond()));
 
