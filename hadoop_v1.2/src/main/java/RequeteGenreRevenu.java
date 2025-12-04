@@ -1,11 +1,11 @@
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -19,9 +19,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.codehaus.jackson.map.ser.StdSerializers;
 
-public class RequetesPrincipales {
+public class RequeteGenreRevenu {
     // Chemins (Assurez-vous qu'ils existent sur HDFS)
     private static final String INPUT_PATH_CONTENU = "input-requetes/contenu.csv";
     private static final String INPUT_PATH_STREAM = "input-requetes/stream_fact.csv";
@@ -57,6 +56,28 @@ public class RequetesPrincipales {
     // Sortie : Clé = ID Client (Text), Valeur = Tag + Data (Text)
     public static class JoinMapper extends Mapper<LongWritable, Text, Text, Text> {
 
+        HashMap<String,String> contenuGenre = new HashMap<>();
+
+
+        // La méthode setup est appelée UNE FOIS au démarrage du Mapper
+        @Override
+        protected void setup(Context context) throws IOException, InterruptedException {
+            // On charge le fichier de référence depuis HDFS
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+
+            // Lecture du fichier contenu.csv
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(new Path(INPUT_PATH_CONTENU))))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(","); // ou split("\\|")
+                    // Supposons: Index 0 = ID, Index 5 = Genre
+                    if (parts.length > 5) {
+                        contenuGenre.put(parts[0], parts[5]);
+                    }
+                }
+            }
+        }
+
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
@@ -67,10 +88,13 @@ public class RequetesPrincipales {
                     // tring genre = words[]; // mettre l'index
                     // ID contenu
                     String idContenu = words[0];
-                    context.write(new Text(idContenu), new Text("CONTENU|" + line));
+                    String genre = words[5];
+                    contenuGenre.put(idContenu, genre);
+                    context.write(new Text(genre), new Text("CONTENU|" + line));
                 } else {
                     String idContenu = words[5];
-                    context.write(new Text(idContenu), new Text("FACT|" + line));
+                    String genre = contenuGenre.get(idContenu);
+                    context.write(new Text(genre), new Text("FACT|" + line));
 
                 }
             }
@@ -128,7 +152,7 @@ public class RequetesPrincipales {
         Job job = new Job(conf, "RequetesPrincipales");
 
         // CORRECTION 1 : La bonne classe principale
-        job.setJarByClass(RequetesPrincipales.class);
+        job.setJarByClass(RequeteGenreRevenu.class);
 
         job.setMapperClass(JoinMapper.class);
         job.setReducerClass(JoinReducer.class);
