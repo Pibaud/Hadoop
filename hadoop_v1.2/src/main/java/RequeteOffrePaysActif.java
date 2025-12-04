@@ -17,13 +17,11 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-public class RequeteAnneeRegionAbonnenement {
+public class RequeteOffrePaysActif {
     // Chemins (Assurez-vous qu'ils existent sur HDFS)
     private static final String INPUT_PATH_DATE = "input-requetes-secondaires/date_dim.csv";
     private static final String INPUT_PATH_ABONNEMENTS = "input-requetes-secondaires/abonnement_fact.csv";
     private static final String INPUT_PATH_REGION= "input-requetes-secondaires/region_dim.csv";
-    private static final String INPUT_PATH_OFFRE="intput-requetes-secondaires/offre_dim.csv";
-
     private static final String OUTPUT_PATH = "output/requetesSecondaire-";
 
     // IL FAUT WritableComparable, pas juste Writable
@@ -62,7 +60,7 @@ public class RequeteAnneeRegionAbonnenement {
             // 2. Si c'est le même pays, on compare les âges
             if (cmp == 0) {
 
-                    return this.annee.compareTo(o.annee);
+                return this.annee.compareTo(o.annee);
 
             }
 
@@ -113,7 +111,7 @@ public class RequeteAnneeRegionAbonnenement {
                     String[] parts = line.split(","); // ou split("\\|")x²
                     // Supposons: Index 0 = ID, Index 5 = Genre
                     if (parts.length > 3) {
-                        regionNom.put(parts[0],new StatsTuple(parts[1],""));
+                        regionNom.put(parts[0],new StatsTuple(parts[2],""));
                     }
                 }
             }
