@@ -1,0 +1,6 @@
+
+ID_OFFRE,NOM_OFFRE,TYPE_OFFRE,PRIX_MENSUEL_EUR
+OFF_FREE,Spotify Free,Gratuit,0
+OFF_PREM,Spotify Premium,Individuel,10,99
+OFF_DUO,Premium Duo,Duo,14,99
+OFF_FAM,Premium Family,Famille,17,99
