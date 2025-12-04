@@ -22,7 +22,7 @@ public class RequetePaysAgeRevenu {
     private static final String INPUT_PATH_CONTENU = "input-requetes/contenu.csv";
     private static final String INPUT_PATH_STREAM = "input-requetes/stream_fact.csv";
     private static final String INPUT_PATH_USER = "input-requetes/utilisateurs.csv";
-    private static final String OUTPUT_PATH = "output/requetesPrincipales-";
+    private static final String OUTPUT_PATH = "output/requetesPrincipalesPaysAgeRevenu-";
 
     // IL FAUT WritableComparable, pas juste Writable
     public static class StatsTuple implements WritableComparable<StatsTuple> {

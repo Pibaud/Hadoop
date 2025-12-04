@@ -24,7 +24,7 @@ public class RequeteGenreRevenu {
     // Chemins (Assurez-vous qu'ils existent sur HDFS)
     private static final String INPUT_PATH_CONTENU = "input-requetes/contenu.csv";
     private static final String INPUT_PATH_STREAM = "input-requetes/stream_fact.csv";
-    private static final String OUTPUT_PATH = "output/requetesPrincipales-";
+    private static final String OUTPUT_PATH = "output/requetesPrincipalesGenreRevenu-";
 
     public static class StatsTuple implements Writable {
         private String genre;

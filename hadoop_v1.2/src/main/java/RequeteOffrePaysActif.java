@@ -1,8 +1,6 @@
 import java.io.*;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -22,17 +20,18 @@ public class RequeteOffrePaysActif {
     private static final String INPUT_PATH_DATE = "input-requetes-secondaires/date_dim.csv";
     private static final String INPUT_PATH_ABONNEMENTS = "input-requetes-secondaires/abonnement_fact.csv";
     private static final String INPUT_PATH_REGION= "input-requetes-secondaires/region_dim.csv";
-    private static final String OUTPUT_PATH = "output/requetesSecondaire-";
+    private static final String INPUT_PATH_OFFRE="input-requetes-secondaires/offre_dim.csv";
+    private static final String OUTPUT_PATH = "output/requetesSecondaireOffrePaysActif-";
 
     // IL FAUT WritableComparable, pas juste Writable
     public static class StatsTuple implements WritableComparable<StatsTuple> {
         private String pays;
-        private String annee;
+        private String offre;
         public StatsTuple() {}
 
-        public StatsTuple(String pays, String annee) {
+        public StatsTuple(String pays, String offre) {
             this.pays = pays;
-            this.annee=annee;
+            this.offre=offre;
         }
 
         @Override
@@ -40,14 +39,14 @@ public class RequeteOffrePaysActif {
             // writeUTF est plus sûr que writeChars pour des Strings courtes
             // Il écrit la longueur puis les caractères
             out.writeUTF(pays);
-            out.writeUTF(annee);
+            out.writeUTF(offre);
         }
 
         @Override
         public void readFields(DataInput in) throws IOException {
             // Il faut lire EXACTEMENT comme on a écrit
             pays = in.readUTF();
-            annee = in.readUTF();
+            offre = in.readUTF();
 
         }
 
@@ -60,7 +59,7 @@ public class RequeteOffrePaysActif {
             // 2. Si c'est le même pays, on compare les âges
             if (cmp == 0) {
 
-                return this.annee.compareTo(o.annee);
+                return this.offre.compareTo(o.offre);
 
             }
 
@@ -70,13 +69,13 @@ public class RequeteOffrePaysActif {
         // Important pour l'écriture finale dans le fichier texte
         @Override
         public String toString() {
-            return pays + "\t" + annee;
+            return pays + "\t" + offre;
         }
 
         // HashCode est recommandé pour que le partitionnement soit efficace
         @Override
         public int hashCode() {
-            return pays.hashCode() * 163 + annee.hashCode();
+            return pays.hashCode() * 163 + offre.hashCode();
         }
     }
 
@@ -84,7 +83,7 @@ public class RequeteOffrePaysActif {
     // Sortie : Clé = ID Client (Text), Valeur = Tag + Data (Text)
     public static class JoinMapper extends Mapper<LongWritable, Text, StatsTuple, DoubleWritable> {
 
-        HashMap<String,StatsTuple> dateAnnee = new HashMap<>();
+        HashMap<String,StatsTuple> nomOffre = new HashMap<>();
         HashMap<String,StatsTuple> regionNom = new HashMap<>();
 
         // La méthode setup est appelée UNE FOIS au démarrage du Mapper
@@ -94,13 +93,13 @@ public class RequeteOffrePaysActif {
             FileSystem fs = FileSystem.get(context.getConfiguration());
 
             // Lecture du fichier contenu.csv
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(new Path(INPUT_PATH_DATE))))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(new Path(INPUT_PATH_OFFRE))))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     String[] parts = line.split(","); // ou split("\\|")x²
                     // Supposons: Index 0 = ID, Index 5 = Genre
                     if (parts.length > 2) {
-                        dateAnnee.put(parts[0],new StatsTuple("",parts[3]));
+                        nomOffre.put(parts[0],new StatsTuple("",parts[1]));
                     }
                 }
             }
@@ -128,15 +127,15 @@ public class RequeteOffrePaysActif {
                 if (((FileSplit) context.getInputSplit()).getPath().getName().contains("fact")) { // mettre un identifiant
                     // tring genre = words[]; // mettre l'index
                     // ID contenu
-                    String idDate = words[0];
-                    StatsTuple annee =  dateAnnee.get(idDate);
+                    String idOffre = words[1];
+                    StatsTuple annee =  nomOffre.get(idOffre);
 
                     String idRegion = words[2];
                     StatsTuple region = regionNom.get(idRegion);
 
-                    double nbAbonnements = Double.parseDouble(words[3]);
+                    double nbAbonnements = Double.parseDouble(words[4]);
 
-                    context.write(new StatsTuple(region.pays, annee.annee),new DoubleWritable(nbAbonnements));
+                    context.write(new StatsTuple(region.pays, annee.offre),new DoubleWritable(nbAbonnements));
 
 
                 }
@@ -152,13 +151,13 @@ public class RequeteOffrePaysActif {
                 throws IOException, InterruptedException {
 
 
-            double revenu = 0;
+            double nbAbonnementActif = 0;
             for(DoubleWritable value : values) {
-                revenu += value.get();
+                nbAbonnementActif += value.get();
 
             }
 
-            context.write(new Text(key.toString()),new DoubleWritable(revenu));
+            context.write(new Text(key.toString()),new DoubleWritable(nbAbonnementActif));
 
 
         }
@@ -169,7 +168,7 @@ public class RequeteOffrePaysActif {
         Job job = new Job(conf, "RequetesPrincipales");
 
         // CORRECTION 1 : La bonne classe principale
-        job.setJarByClass(RequetePaysAgeRevenu.class);
+        job.setJarByClass(RequeteOffrePaysActif.class);
 
         job.setMapperClass(JoinMapper.class);
         job.setReducerClass(JoinReducer.class);

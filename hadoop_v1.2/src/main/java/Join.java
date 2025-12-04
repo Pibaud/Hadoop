@@ -74,7 +74,7 @@ public class Join {
             if (customerData != null && !ordersList.isEmpty()) {
                 for (String order : ordersList) {
 
-                    context.write(key,new Text(customerData.split("\\|")[7] +" | "+ order.split("\\|")[8]));
+                    context.write(key,new Text(customerData.split("\\|")[1] +" | "+ order.split("\\|")[8]));
                 }
             }
         }

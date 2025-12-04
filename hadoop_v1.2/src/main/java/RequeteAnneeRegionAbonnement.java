@@ -1,8 +1,6 @@
 import java.io.*;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -17,14 +15,12 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-public class RequeteAnneeRegionAbonnenement {
+public class RequeteAnneeRegionAbonnement {
     // Chemins (Assurez-vous qu'ils existent sur HDFS)
     private static final String INPUT_PATH_DATE = "input-requetes-secondaires/date_dim.csv";
     private static final String INPUT_PATH_ABONNEMENTS = "input-requetes-secondaires/abonnement_fact.csv";
     private static final String INPUT_PATH_REGION= "input-requetes-secondaires/region_dim.csv";
-    private static final String INPUT_PATH_OFFRE="intput-requetes-secondaires/offre_dim.csv";
-
-    private static final String OUTPUT_PATH = "output/requetesSecondaire-";
+    private static final String OUTPUT_PATH = "output/requetesSecondaireAbonnement-";
 
     // IL FAUT WritableComparable, pas juste Writable
     public static class StatsTuple implements WritableComparable<StatsTuple> {
